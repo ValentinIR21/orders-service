@@ -6,19 +6,32 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"orders/internal/cache"
 	"orders/internal/db"
 	"orders/internal/models"
 	"strconv"
+	"time"
+
+	"github.com/redis/go-redis/v9"
 )
 
 var database *db.DB
+var redisClient *redis.Client
 
 func main() {
+
 	ctx := context.Background()
 
 	connString := "postgres://postgres:pass@localhost:5432/postgres"
 
 	var err error
+
+	redisClient, err = cache.NewConnectionRedis(ctx)
+	if err != nil {
+		log.Printf("Redis недоступен: %v", err)
+		redisClient = nil
+	}
+
 	database, err = db.NewConnection(ctx, connString)
 	if err != nil {
 		log.Fatal("Ошибка подключения к БД:", err)
@@ -61,10 +74,36 @@ func getOrderId(w http.ResponseWriter, r *http.Request) {
 
 	ctx := context.Background()
 
-	order, err := database.GetOrderById(ctx, id)
+	var order models.Order
+
+	// Добавление товара в redis
+	if redisClient != nil {
+		val, err := redisClient.Get(ctx, idStr).Result()
+		if err == nil {
+			if err := json.Unmarshal([]byte(val), &order); err == nil {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				json.NewEncoder(w).Encode(order)
+				log.Printf("Товар %q найден в Redis", idStr)
+				return
+			}
+		}
+	}
+
+	// Ищем в БД, если нет в Redis
+	order, err = database.GetOrderById(ctx, id)
 	if err != nil {
-		http.Error(w, "Ошибка:"+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Заказ не найден", http.StatusNotFound)
 		return
+	}
+
+	// Добавляем товар в Redis на часик
+	if redisClient != nil {
+		data, _ := json.Marshal(order)
+		if err := redisClient.Set(ctx, idStr, data, 1*time.Hour).Err(); err != nil {
+			log.Printf("Ошибка при сохранении в Redis: %v", err)
+		}
+		log.Printf("Товар %q добавлен в Redis", idStr)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
