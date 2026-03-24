@@ -72,7 +72,7 @@ func getOrderId(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx := r.Context()
 
 	var order models.Order
 
@@ -99,7 +99,11 @@ func getOrderId(w http.ResponseWriter, r *http.Request) {
 
 	// Добавляем товар в Redis на часик
 	if redisClient != nil {
-		data, _ := json.Marshal(order)
+		data, err := json.Marshal(order)
+		if err != nil {
+			log.Printf("Ошибка при сериализации товара %d: %v", order.ID, err)
+			return
+		}
 		if err := redisClient.Set(ctx, idStr, data, 1*time.Hour).Err(); err != nil {
 			log.Printf("Ошибка при сохранении в Redis: %v", err)
 		}
