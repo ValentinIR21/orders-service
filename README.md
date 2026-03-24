@@ -2,6 +2,9 @@
 <h2>Возможности:</h2>
 - Подключение к PostgresSQL
 - Обработка JSON, сохранение в БД и возврат результата
+- Получение всех заказов
+- Получение заказа по ID
+- Кэширование Заказов в Redis
 
 <h2>API:</h2>
 <h3>Пример запроса JSON:</h3>
@@ -28,25 +31,27 @@
 
 <h2>Запуск:</h2>
 
+**Запустить PostgreSQL**:
+
 - ```docker run -d --name postgres -e POSTGRES_PASSWORD=pass -p 5432:5432 postgres```
+
+**Запустить Redis (необязательно)**:
+
+- ```docker run -d --name redis -p 6379:6379 redis```
+
+**Запустить шарманку**
 - ```go run main.go```
 
   
-*запросы*:
+**запросы**:
 
-- ```http://localhost:9091/order```
+- ```http://localhost:9091/order``` - Создание товара (принимает тело в формате JSON)
 
-- ```http://localhost:9091/orders```
+- ```http://localhost:9091/orders``` - Получение всех товаров
 
-- ```http://localhost:9091/order/{id}```
+- ```http://localhost:9091/order/{id}``` - Получение товара по id
 
 <h2>План дальнейших действий:</h2>
-
-- Добавить handler для получения всех заказов +
-
-- Добавить handler для получения заказа по id +
-
-- Добавить кэш (map + RWMutex)
   
 - Kafka consumer для асинхронной обработки
   
