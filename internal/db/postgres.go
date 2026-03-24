@@ -97,3 +97,24 @@ func (db *DB) GetAllOrders(ctx context.Context) ([]models.Order, error) {
 
 	return orders, nil
 }
+
+// Принимает контекст и id. Возвращает структуру и error
+func (db *DB) GetOrderById(ctx context.Context, id int) (models.Order, error) {
+
+	var order models.Order
+
+	sqlQuery := `
+	SELECT * 
+	FROM orders
+	WHERE id = $1
+	`
+
+	err := db.conn.QueryRow(ctx, sqlQuery, id).
+		Scan(&order.ID, &order.Product, &order.Description, &order.Price, &order.CreatedAt)
+
+	if err != nil {
+		return models.Order{}, fmt.Errorf("товар не найден: %w", err)
+	}
+
+	return order, nil
+}

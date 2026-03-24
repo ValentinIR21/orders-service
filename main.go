@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"orders/internal/db"
 	"orders/internal/models"
+	"strconv"
 )
 
 var database *db.DB
@@ -31,10 +32,46 @@ func main() {
 
 	http.HandleFunc("/order", createOrderHandler)
 	http.HandleFunc("/orders", getOrders)
+	http.HandleFunc("/order/", getOrderId)
 
 	if err := http.ListenAndServe(":9091", nil); err != nil {
 		log.Fatal("Ошибка запуска сервера:", err)
 	}
+
+}
+
+func getOrderId(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodGet {
+		http.Error(w, "Ожидается метод: GET", http.StatusMethodNotAllowed)
+		return
+	}
+
+	idStr := r.URL.Path[len("/order/"):]
+	if idStr == "" {
+		http.Error(w, "ID заказа не указан", http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Ожидается получение id в виде числа", http.StatusBadRequest)
+		return
+	}
+
+	ctx := context.Background()
+
+	order, err := database.GetOrderById(ctx, id)
+	if err != nil {
+		http.Error(w, "Ошибка:"+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(order)
+
+	log.Printf("запрос '/orders/{id}' отработал успешно")
 
 }
 
@@ -55,7 +92,8 @@ func getOrders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(orders)
 
 	log.Printf("запрос '/orders' отработал успешно")
