@@ -30,11 +30,35 @@ func main() {
 	fmt.Println("Успешное создание таблицы orders")
 
 	http.HandleFunc("/order", createOrderHandler)
+	http.HandleFunc("/orders", getOrders)
 
 	if err := http.ListenAndServe(":9091", nil); err != nil {
 		log.Fatal("Ошибка запуска сервера:", err)
 	}
 
+}
+
+func getOrders(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodGet {
+		http.Error(w, "Ожидается метод: GET", http.StatusMethodNotAllowed)
+		return
+	}
+
+	ctx := context.Background()
+
+	var orders []models.Order
+
+	orders, err := database.GetAllOrders(ctx)
+	if err != nil {
+		http.Error(w, "Ошибка получения товаров из БД:"+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(orders)
+
+	log.Printf("запрос '/orders' отработал успешно")
 }
 
 func createOrderHandler(w http.ResponseWriter, r *http.Request) {

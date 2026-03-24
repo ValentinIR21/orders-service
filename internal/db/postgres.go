@@ -71,3 +71,29 @@ func (db *DB) InsertOrders(ctx context.Context, orderReq models.OrderRequest) (m
 
 	return order, nil // возвращаем копию структуры
 }
+
+// Принимает контекст и возвращает список всех товаров.
+func (db *DB) GetAllOrders(ctx context.Context) ([]models.Order, error) {
+
+	sqlQuery := `SELECT id, product, description, price, created_at FROM orders ORDER BY id DESC`
+
+	rows, err := db.conn.Query(ctx, sqlQuery)
+	if err != nil {
+		return nil, fmt.Errorf("Ошибка запроса: %w", err)
+	}
+	defer rows.Close()
+
+	var orders []models.Order
+
+	for rows.Next() {
+		var order models.Order
+		err := rows.Scan(&order.ID, &order.Product, &order.Description, &order.Price, &order.CreatedAt)
+		if err != nil {
+			continue // Если ошибка в одной строке, то просто пропустим ее пока что
+		}
+
+		orders = append(orders, order)
+	}
+
+	return orders, nil
+}
