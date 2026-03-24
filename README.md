@@ -30,17 +30,21 @@
 
 - ```docker run -d --name postgres -e POSTGRES_PASSWORD=pass -p 5432:5432 postgres```
 - ```go run main.go```
+
+  
 *запросы*:
 
 - ```http://localhost:9091/order```
 
 - ```http://localhost:9091/orders```
 
+- ```http://localhost:9091/order/{id}```
+
 <h2>План дальнейших действий:</h2>
 
 - Добавить handler для получения всех заказов +
 
-- Добавить handler для получения заказа по id
+- Добавить handler для получения заказа по id +
 
 - Добавить кэш (map + RWMutex)
   
