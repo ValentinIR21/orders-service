@@ -6,9 +6,14 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func NewConnectionRedis(ctx context.Context) (*redis.Client, error) {
+type RedisClient struct {
+	Client *redis.Client
+}
+
+// Инициализация соединения с redis
+func NewConnectionRedis(ctx context.Context, addr string) (*RedisClient, error) {
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     addr,
 		Password: "",
 		DB:       0,
 	})
@@ -17,5 +22,7 @@ func NewConnectionRedis(ctx context.Context) (*redis.Client, error) {
 		return nil, err
 	}
 
-	return rdb, nil
+	return &RedisClient{
+		Client: rdb,
+	}, nil
 }
