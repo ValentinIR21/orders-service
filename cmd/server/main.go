@@ -63,5 +63,4 @@ func main() {
 	if err := http.ListenAndServe(":9091", nil); err != nil {
 		log.Fatalf("Ошибка запуска сервера: %v", err)
 	}
-	log.Printf("Сервер доступен: localhost:9091")
 }
