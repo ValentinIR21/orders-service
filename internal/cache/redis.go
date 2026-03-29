@@ -26,3 +26,9 @@ func NewConnectionRedis(ctx context.Context, addr string) (*RedisClient, error) 
 		Client: rdb,
 	}, nil
 }
+
+func (r *RedisClient) CloseConnectionRedis() error {
+
+	return r.Client.Close()
+
+}

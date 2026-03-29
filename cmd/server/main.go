@@ -25,6 +25,7 @@ func main() {
 		log.Printf("Redis недоступен: %v", err)
 		redisClient = nil
 	}
+	defer redisClient.CloseConnectionRedis()
 
 	//Инициализация PostgreSQL
 	postgresURL := os.Getenv("DB_URL")
